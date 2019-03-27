@@ -1,4 +1,2 @@
 com.bsuir.lab2.plugin.ColorStatisticsPlugin
 com.bsuir.lab2.plugin.MachineRunnerPlugin
-com.bsuir.lab2.plugin.JsonToXmlPlugin
-com.bsuir.lab2.plugin.XmlToJsonPlugin

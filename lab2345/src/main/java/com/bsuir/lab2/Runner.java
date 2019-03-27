@@ -3,13 +3,18 @@ package com.bsuir.lab2;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.bsuir.lab1.util.Utils;
@@ -18,6 +23,7 @@ import com.bsuir.lab2.plugin.Plugin;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.reflections.Reflections;
 
 public class Runner {
 
@@ -33,7 +39,6 @@ public class Runner {
 
     static {
         Class<Machine> parentClz = Machine.class;
-
         //getting classes from hierarchy
         machineClasses =
                 Utils.getClasses("com.bsuir.lab2.domain")
@@ -49,7 +54,8 @@ public class Runner {
         actions.put(4, "View machines");
         actions.put(5, "Serialize machines");
         actions.put(6, "Deserialize machines");
-        actions.put(7, "Exit");
+        actions.put(7, "Update plugins");
+        actions.put(8, "Exit");
 
         //Loading all classes from classpath that implements Plugin interface
         for (Plugin plugin : ServiceLoader.load(Plugin.class)) {
@@ -93,6 +99,9 @@ public class Runner {
                     handleDeserializeAction("test.xml");
                     break;
                 case 7:
+                    handleUpdatePlugins();
+                    break;
+                case 8:
                     System.out.println("Bye-bye!");
                     return;
                 default:
@@ -106,6 +115,38 @@ public class Runner {
                     break;
             }
         }
+    }
+
+    private static void handleUpdatePlugins() throws IllegalAccessException, InstantiationException {
+        plugins.clear();
+        //Loading all classes from classpath that implements Plugin interface
+        for (Plugin plugin : ServiceLoader.load(Plugin.class)) {
+            plugins.put(actions.size() + plugins.size() + 1, plugin);
+        }
+
+        File jars = new File("./libs");
+        for (File f : jars.listFiles()) {
+            try {
+                ClassLoader cl = ClassLoader.getSystemClassLoader();
+
+                Class<?> clazz = cl.getClass();
+                // Get the protected addURL method from the parent URLClassLoader class
+
+                Method method = clazz.getSuperclass().getDeclaredMethod("addURL", new Class[] {URL.class});
+                // Run projected addURL method to add JAR to classpath
+
+                method.setAccessible(true);
+
+                method.invoke(cl, new Object[] {f.toURI().toURL()});
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+        }
+        Set<Class<? extends Plugin>> additionalPlugins = new Reflections("com.bsuir.plugin").getSubTypesOf(Plugin.class);
+        for (Class<? extends Plugin> aClass : additionalPlugins) {
+            plugins.put(actions.size() + plugins.size() + 1, aClass.newInstance());
+        }
+
     }
 
     /**
