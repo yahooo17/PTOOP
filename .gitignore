@@ -1,6 +1,23 @@
 # Compiled class file
 *.class
 
+# Maven
+/*/target/
+/**/target/
+
+# Eclipse
+/**/.project
+/**/.classpath
+/**/.settings/
+
+# IDEA
+.idea/
+.ideaDataSources/
+.dataSources/
+*.iml
+*.ipr
+*.iws
+
 # Log file
 *.log
 
